@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "228441990224",
+    "project_id": "icreativezauth",
+    "storage_bucket": "icreativezauth.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:228441990224:android:713df5cdead73ea8935d55",
+        "android_client_info": {
+          "package_name": "com.authenticationsystem"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCCeuoYSXTCD--AeLwWF-OwLvmyFeb-CyM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
