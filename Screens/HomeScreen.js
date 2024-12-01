@@ -1,27 +1,48 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ImageBackground, KeyboardAvoidingView, Platform, Alert, Button } from 'react-native';
-import background from '../assets/backgroundpng.png'
+import React from 'react';
+import { 
+  View, 
+  Text, 
+  TouchableOpacity, 
+  StyleSheet, 
+  ImageBackground, 
+  KeyboardAvoidingView, 
+  Platform, 
+  Alert 
+} from 'react-native';
+import background from '../assets/backgroundpng.png';
 import { useNavigation } from '@react-navigation/native';
-const HomeScreen = ({route}) => {
+import auth from '@react-native-firebase/auth';
 
-const navigation= useNavigation()
+const HomeScreen = ({ route }) => {
+  const navigation = useNavigation();
+  const { name, email } = route.params;
 
-  const { userId, name, email } = route.params;
-  
+  const handleSignOut = async () => {
+    try {
+      await auth().signOut();
+      Alert.alert("Signed Out", "You have been signed out successfully.");
+      navigation.replace("Login");
+    } catch (error) {
+      Alert.alert("Sign Out Failed", error.message);
+    }
+  };
+
   return (
     <ImageBackground
       source={background}
       style={styles.backgroundImage}
     >
-      <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <KeyboardAvoidingView 
+        style={styles.container} 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
         <View style={styles.header}>
-          <Text style={styles.title}>Welcome {name} </Text>
+          <Text style={styles.title}>Welcome, {name}</Text>
           <Text style={styles.subtitle}>{email}</Text>
-          <TouchableOpacity style={styles.button} onPress={()=>{navigation.navigate("Login")}}>
+          <TouchableOpacity style={styles.button} onPress={handleSignOut}>
             <Text style={styles.buttonText}>Logout</Text>
           </TouchableOpacity>
         </View>
-
       </KeyboardAvoidingView>
     </ImageBackground>
   );
@@ -43,7 +64,7 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     marginBottom: 40,
-    paddingVertical: 20
+    paddingVertical: 20,
   },
   title: {
     fontSize: 30,
@@ -51,13 +72,18 @@ const styles = StyleSheet.create({
     color: '#fff',
     marginBottom: 10,
   },
+  subtitle: {
+    fontSize: 16,
+    color: '#fff',
+    marginBottom: 20,
+  },
   button: {
     backgroundColor: '#5C6BC0',
     paddingVertical: 15,
     borderRadius: 25,
     alignItems: 'center',
     marginBottom: 15,
-    width: '90%'
+    width: '90%',
   },
   buttonText: {
     color: '#fff',

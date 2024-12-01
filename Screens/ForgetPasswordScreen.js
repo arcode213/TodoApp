@@ -2,12 +2,11 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ImageBackground, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import background from '../assets/backgroundpng.png'
 import { useNavigation } from '@react-navigation/native';
-import auth from '@react-native-firebase/auth'
+import auth, { sendPasswordResetEmail } from '@react-native-firebase/auth'
 import firestore from '@react-native-firebase/firestore'
 
-const LoginScreen = () => {
+const ForgetPasswordScreen = () => {
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
 
 
 const handleValidation=()=>{
@@ -16,37 +15,20 @@ const handleValidation=()=>{
         Alert.alert("Invalid Email","Please Enter Valid Email Address")
         return false;
     }
-    if(!password){
-        Alert.alert("Password Required","Please Enter Password")
-        return false;
-    }
+
     return true;
 }
+
 const navigation= useNavigation()
 
-const handleLogin = async () => {
+const handleForgetPassword =async () => {
   if (handleValidation()) {
     try {
-      const user = await auth().signInWithEmailAndPassword(email, password);
-      const userid = user.user.uid;
-      
-      const userDoc = await firestore().collection('Users').doc(userid).get();
-
-      if (userDoc.exists) {
-        const userData = userDoc.data();
-
-        Alert.alert("Success", `Logged In Successfully\nWelcome ${userData.name}`);
-
-        navigation.navigate('Home', {
-          userId: userid,
-          name: userData.name,
-          email: userData.email,
-        });
-      } else {
-        Alert.alert("User Not Found", "No user data available in Firestore.");
-      }
+      await auth().sendPasswordResetEmail(email).then(()=>{
+        Alert.alert("Password Send")
+      })
     } catch (error) {
-      Alert.alert("Login Error", error.message);
+      Alert.alert("Reset Failed", error.message);
     }
   }
 };
@@ -59,8 +41,8 @@ const handleLogin = async () => {
     >
       <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <View style={styles.header}>
-          <Text style={styles.title}>Welcome Back!</Text>
-          <Text style={styles.subtitle}>Please login to continue</Text>
+          <Text style={styles.title}>Welcome!</Text>
+          <Text style={styles.subtitle}>Reset Your Password</Text>
         </View>
 
         <View style={styles.form}>
@@ -73,22 +55,9 @@ const handleLogin = async () => {
             keyboardType="email-address"
             autoCapitalize="none"
           />
-
-          <TextInput
-            style={styles.input}
-            placeholder="Password"
-            placeholderTextColor="#d9d9d9"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-          />
-
-          <TouchableOpacity style={styles.button} onPress={handleLogin}>
-            <Text style={styles.buttonText}>Login</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={()=>{navigation.navigate("ForgetPassword")}}>
-            <Text style={styles.forgotPassword}>Forgot Password?</Text>
+          
+          <TouchableOpacity onPress={handleForgetPassword}>
+            <Text style={styles.forgotPassword}>Forgot Password</Text>
           </TouchableOpacity>
         </View>
 
@@ -181,4 +150,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default LoginScreen;
+export default ForgetPasswordScreen;
