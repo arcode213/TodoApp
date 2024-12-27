@@ -1,63 +1,89 @@
 import { View, TextInput, Button, FlatList, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import React, { useState, useEffect } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import firestore from '@react-native-firebase/firestore'; // For Firebase Firestore
+import { useRoute } from '@react-navigation/native';
 
 function TodoScreen() {
+
+    const route= useRoute()
+    const {userId}= route.params
+
   const [task, setTask] = useState('');
   const [tasks, setTasks] = useState([]);
 
+  // Fetch tasks from Firestore when the component mounts
   useEffect(() => {
-    loadTasks();
-  }, []);
+    const unsubscribe = firestore()
+      .collection('tasks') // Firestore collection where tasks are stored
+      .doc(userId) // Use the user's uid as the document ID
+      .collection('userTasks') // Subcollection for tasks
+      .onSnapshot(snapshot => {
+        const tasksData = snapshot.docs.map(doc => ({
+          id: doc.id,
+          task: doc.data().task,
+          completed: doc.data().completed,
+        }));
+        setTasks(tasksData);
+      });
 
-  const saveTasks = async (tasks) => {
-    try {
-      await AsyncStorage.setItem('tasks', JSON.stringify(tasks));
-    } catch (error) {
-      console.error('Error saving tasks', error);
-    }
-  };
+    // Cleanup the listener on unmount
+    return () => unsubscribe();
+  }, [userId]);
 
-  const loadTasks = async () => {
-    try {
-      const storedTasks = await AsyncStorage.getItem('tasks');
-      if (storedTasks) {
-        setTasks(JSON.parse(storedTasks));
-      }
-    } catch (error) {
-      console.error('Error loading tasks', error);
-    }
-  };
-
+  // Add a new task to Firestore
   const addTask = () => {
     if (task.trim() === '') {
       alert('Task cannot be empty');
       return;
     }
-    const newTask = { id: Date.now().toString(), task, completed: false };
-    const updatedTasks = [...tasks, newTask];
-    setTasks(updatedTasks);
-    saveTasks(updatedTasks);
-    setTask('');
+
+    firestore()
+      .collection('tasks')
+      .doc(userId) // Use the user's UID to store tasks
+      .collection('userTasks')
+      .add({
+        task,
+        completed: false,
+      })
+      .then(() => {
+        setTask('');
+      })
+      .catch(error => {
+        console.error('Error adding task: ', error);
+      });
   };
 
-  const toggleTaskCompletion = (taskId) => {
-    const updatedTasks = tasks.map((t) =>
-      t.id === taskId ? { ...t, completed: !t.completed } : t
-    );
-    setTasks(updatedTasks);
-    saveTasks(updatedTasks);
+  // Toggle task completion in Firestore
+  const toggleTaskCompletion = (taskId, currentCompletion) => {
+    firestore()
+      .collection('tasks')
+      .doc(userId)
+      .collection('userTasks')
+      .doc(taskId)
+      .update({
+        completed: !currentCompletion,
+      })
+      .catch(error => {
+        console.error('Error updating task: ', error);
+      });
   };
 
+  // Delete a task from Firestore
   const deleteTask = (taskId) => {
-    const updatedTasks = tasks.filter((t) => t.id !== taskId);
-    setTasks(updatedTasks);
-    saveTasks(updatedTasks);
+    firestore()
+      .collection('tasks')
+      .doc(userId)
+      .collection('userTasks')
+      .doc(taskId)
+      .delete()
+      .catch(error => {
+        console.error('Error deleting task: ', error);
+      });
   };
 
   return (
     <View style={styles.container}>
-        <Text style={styles.heading}>Todo App</Text>
+      <Text style={styles.heading}>Todo App</Text>
 
       <TextInput
         style={styles.input}
@@ -65,8 +91,8 @@ function TodoScreen() {
         onChangeText={setTask}
         placeholder="Enter task"
       />
-      <View style={{marginBottom: 5}}>
-        <Button title="Add Task"   onPress={addTask} />
+      <View style={{ marginBottom: 5 }}>
+        <Button title="Add Task" onPress={addTask} />
       </View>
       <FlatList
         data={tasks}
@@ -75,7 +101,7 @@ function TodoScreen() {
             <Text style={[styles.taskText, item.completed && styles.completedTask]}>
               {item.task}
             </Text>
-            <TouchableOpacity onPress={() => toggleTaskCompletion(item.id)}>
+            <TouchableOpacity onPress={() => toggleTaskCompletion(item.id, item.completed)}>
               <Text style={styles.actionText}>{item.completed ? 'Undo' : 'Complete'}</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => deleteTask(item.id)}>
@@ -88,18 +114,21 @@ function TodoScreen() {
     </View>
   );
 }
+
 export default TodoScreen;
+
 const styles = StyleSheet.create({
-    heading:{
-        textAlign: 'center',
-        marginVertical: 20,
-        fontSize: 20,
-        color: 'white'
-    },
+  heading: {
+    textAlign: 'center',
+    marginVertical: 20,
+    fontSize: 20,
+    color: 'white',
+  },
   container: {
     flex: 1,
     paddingTop: 50,
     paddingHorizontal: 16,
+    backgroundColor: 'gray'
   },
   input: {
     height: 40,
@@ -119,7 +148,7 @@ const styles = StyleSheet.create({
   },
   taskText: {
     flex: 1,
-    color: 'black'
+    color: 'black',
   },
   completedTask: {
     textDecorationLine: 'line-through',

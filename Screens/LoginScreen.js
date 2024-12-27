@@ -37,10 +37,8 @@ const handleLogin = async () => {
 
         Alert.alert("Success", `Logged In Successfully\nWelcome ${userData.name}`);
 
-        navigation.navigate('Home', {
-          userId: userid,
-          name: userData.name,
-          email: userData.email,
+        navigation.navigate('TodoScreen', {
+          userId: userid
         });
       } else {
         Alert.alert("User Not Found", "No user data available in Firestore.");
