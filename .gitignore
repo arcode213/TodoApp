@@ -72,3 +72,9 @@ yarn-error.log
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+Screens/
+Cloudinary.js
+ForgetPasswordScreen.js
+HomeScreen.js
+LoginScreen.js
+SignupScreen.js
